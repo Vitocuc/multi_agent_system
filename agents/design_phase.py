@@ -37,7 +37,7 @@ def cto_node(state: DesignState) -> dict:
     
     user_content = f"Raw Project Intake Document:\n{state['project_description']}"
     if state['feedback']:
-        user_content += f"\n\nNOTE: The previous design was rejected by the human. Review the feedback and pivot your directives accordingly:\n{state['feedback']}"
+        user_content += f"\n\nNOTE: The previous design was redacted by the human. Review the feedback and pivot your directives accordingly:\n{state['feedback']}"
         
     messages = [SystemMessage(content=system_prompt), HumanMessage(content=user_content)]
     return {"cto_directives": llm.invoke(messages).content}
@@ -87,14 +87,14 @@ def design_router(state: DesignState):
 
 # Re-wiring the Graph Pipeline
 builder = StateGraph(DesignState)
-builder.add_node("cto", cto_node) # <-- Inserted CTO at entry
+builder.add_node("cto", cto_node) 
 builder.add_node("architect", technical_architect_node)
 builder.add_node("security_auditor", security_architect_node)
 builder.add_node("test_specifier", test_specifier_node)
 builder.add_node("human_review", human_design_review_node)
 
 # Set the static pipeline sequence
-builder.add_edge(START, "cto") # START goes to CTO first
+builder.add_edge(START, "cto") 
 builder.add_edge("cto", "architect")
 builder.add_edge("architect", "security_auditor")
 builder.add_edge("security_auditor", "test_specifier")
@@ -111,7 +111,7 @@ def run_design_phase(project_brief_path: str):
     final_state = design_app.invoke({
         "project_description": brief, "cto_directives": "", "architecture_blueprint": "", 
         "security_analysis": "", "test_specification": "", "feedback": "", 
-        "iterations": 0, "max_iterations": 3, "is_approved": False
+        "iterations": 0, "max_iterations": 2, "is_approved": False
     })
     
     with open("specs/architecture_blueprint.md", "w") as f: f.write(final_state["architecture_blueprint"])
@@ -120,4 +120,4 @@ def run_design_phase(project_brief_path: str):
     print("\n💾 Specs physically synced to disk: /specs directory initialized.")
 
 if __name__ == "__main__":
-    run_design_phase("PROJECT_INTAKE_TEMPLATE.md")
+    run_design_phase("PROJECT_TEMPLATE.md")

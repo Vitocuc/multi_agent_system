@@ -29,6 +29,25 @@ def load_live_prompt(agent_name: str) -> str:
     path = f".agents/prompts/phase2/{agent_name}.txt"
     with open(path, "r") as f: 
         return f.read()
+def write_multi_file_output(agent_response: str):
+    # Regex to find the pattern "### FILE: path/to/file.py" followed by the code block
+    pattern = r"### FILE:\s*([^\s\n]+)\s*\n```python\n(.*?)\n```"
+    matches = re.findall(pattern, agent_response, re.DOTALL)
+    
+    if not matches:
+        print("⚠️ No explicit file tags found. Falling back to default routing.")
+        return
+
+    for filepath, code_content in matches:
+        # 1. Automatically handle directories (e.g., core/models/)
+        dir_name = os.path.dirname(filepath)
+        if dir_name:
+            os.makedirs(dir_name, exist_ok=True)
+            
+        # 2. Write the modular piece to its exact home
+        with open(filepath, "w") as f:
+            f.write(code_content.strip())
+        print(f"📁 Dynamically compiled and updated: {filepath}")
 
 def initialize_history_log():
     os.makedirs(".agents", exist_ok=True)
@@ -65,7 +84,7 @@ def developer_node(state: ImplementationState) -> dict:
     messages = [SystemMessage(content=system_prompt), HumanMessage(content=user_content)]
     clean_code = llm.invoke(messages).content.replace("```python", "").replace("```", "").strip()
     os.makedirs("core", exist_ok=True)
-    with open("core/payment_engine.py", "w") as f: f.write(clean_code)
+    write_multi_file_output(clean_code) # Handle multi-file output with dynamic routing
     
     return {"previous_code": state["generated_code"], "generated_code": clean_code, "iterations": state["iterations"] + 1}
 
@@ -137,6 +156,6 @@ if __name__ == "__main__":
     
     implementation_app.invoke({
         "arch_specs": arch, "test_specs": tests, "generated_code": "", "previous_code": "",
-        "generated_tests": "", "test_logs": "", "security_logs": "", "iterations": 0, "max_iterations": 4,
+        "generated_tests": "", "test_logs": "", "security_logs": "", "iterations": 0, "max_iterations": 2,
         "is_valid": False, "is_secure": False
     })
