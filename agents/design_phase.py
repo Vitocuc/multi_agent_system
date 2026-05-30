@@ -1,9 +1,13 @@
 import os
 from typing import TypedDict
 from dotenv import load_dotenv
+
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import SystemMessage, HumanMessage
+from langchain_google_genai import ChatGoogleGenerativeAI
+
 from langgraph.graph import StateGraph, START, END
+
 
 load_dotenv()
 
@@ -19,8 +23,13 @@ class DesignState(TypedDict):
     max_iterations: int          
     is_approved: bool            
 
-llm = ChatAnthropic(model="claude-3-5-sonnet-20241022", temperature=0.2)
-
+# llm = ChatAnthropic(model="claude-3-5-sonnet-20241022", temperature=0.2)
+# Initialize the Gemini model (using 1.5 Pro for deep architectural routing)
+llm = ChatGoogleGenerativeAI(
+    model="gemini-1.5-pro", 
+    temperature=0.2,
+    max_retries=2
+)
 def load_live_prompt(agent_name: str) -> str:
     path = f".agents/prompts/phase1/{agent_name}.txt"
     if not os.path.exists(path):

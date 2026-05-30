@@ -1,5 +1,6 @@
 langgraph
 langchain-core
 langchain-anthropic  # Claude 3.5 Sonnet for ciding, altrimenti langchain-openai
+langchain-google-genai>=1.0.0
 pytest
 python-dotenv
